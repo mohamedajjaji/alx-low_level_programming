@@ -1,6 +1,7 @@
 #include "main.h"
 
 void checkELF(unsigned char *e_ident);
+void closeELF(int elf);
 void ELF_info(unsigned char *e_ident);
 void print_type(unsigned int e_type, unsigned char *e_ident);
 void print_entry(unsigned long int e_entry, unsigned char *e_ident);
@@ -20,6 +21,21 @@ void checkELF(unsigned char *e_ident)
 		if (e_ident[i] != 127 && e_ident[i] != 'E' && e_ident[i] != 'L' &&
 			e_ident[i] != 'F')
 			dprintf(STDERR_FILENO, "Error: Not an ELF file\n"), exit(98);
+	}
+}
+
+/**
+ * closeELF - Closes an ELF file
+ * @elf: File descriptor of the ELF file
+ *
+ * Return: Void
+ */
+void closeELF(int elf)
+{
+	if (close(elf) == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", elf);
+		exit(98);
 	}
 }
 
@@ -172,6 +188,7 @@ int main(int argc, char *argv[])
 	h = malloc(sizeof(Elf64_Ehdr));
 	if (h == NULL)
 	{
+		closeELF(elf);
 		dprintf(STDERR_FILENO, "Error: Can't read file %s\n", argv[1]);
 		exit(98);
 	}
@@ -179,6 +196,7 @@ int main(int argc, char *argv[])
 	if (rd == -1)
 	{
 		free(h);
+		closeELF(elf);
 		dprintf(STDERR_FILENO, "Error: `%s`: No such file\n", argv[1]);
 		exit(98);
 	}
@@ -190,11 +208,7 @@ int main(int argc, char *argv[])
 	print_entry(h->e_entry, h->e_ident);
 
 	free(h);
-	if (close(elf) == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", elf);
-		exit(98);
-	}
+	closeELF(elf);
 
 	return (0);
 }
