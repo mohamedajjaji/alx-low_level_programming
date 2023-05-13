@@ -1,8 +1,8 @@
 #include "main.h"
 
 void checkELF(unsigned char *e_ident);
-void closeELF(int elf);
-void ELF_info(unsigned char *e_ident);
+void ELF_info1(unsigned char *e_ident);
+void ELF_info2(unsigned char *e_ident);
 void print_type(unsigned int e_type, unsigned char *e_ident);
 void print_entry(unsigned long int e_entry, unsigned char *e_ident);
 
@@ -25,27 +25,12 @@ void checkELF(unsigned char *e_ident)
 }
 
 /**
- * closeELF - Closes an ELF file
- * @elf: File descriptor of the ELF file
- *
- * Return: Void
- */
-void closeELF(int elf)
-{
-	if (close(elf) == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", elf);
-		exit(98);
-	}
-}
-
-/**
- * ELF_info - Prints the info of an ELF header
+ * ELF_info1 - Prints the info of an ELF header
  * @e_ident: A pointer to an array containing the ELF
  *
  * Return: Void
  */
-void ELF_info(unsigned char *e_ident)
+void ELF_info1(unsigned char *e_ident)
 {
 	int i;
 
@@ -63,11 +48,11 @@ void ELF_info(unsigned char *e_ident)
 	switch (e_ident[EI_CLASS])
 	{
 	case ELFCLASS32:
-	printf("ELF32\n");
-	break;
+		printf("ELF32\n");
+		break;
 	case ELFCLASS64:
-	printf("ELF64\n");
-	break;
+		printf("ELF64\n");
+		break;
 	default:
 	printf("<unknown: %x>\n", e_ident[EI_CLASS]);
 	}
@@ -76,15 +61,24 @@ void ELF_info(unsigned char *e_ident)
 	switch (e_ident[EI_DATA])
 	{
 	case ELFDATA2LSB:
-	printf("2's complement, little endian\n");
-	break;
+		printf("2's complement, little endian\n");
+		break;
 	case ELFDATA2MSB:
-	printf("2's complement, big endian\n");
-	break;
+		printf("2's complement, big endian\n");
+		break;
 	default:
 	printf("<unknown: %x>\n", e_ident[EI_CLASS]);
 	}
+}
 
+/**
+ * ELF_info2 - Prints the info of an ELF header
+ * @e_ident: A pointer to an array containing the ELF
+ *
+ * Return: Void
+ */
+void ELF_info2(unsigned char *e_ident)
+{
 	printf("  Version:                           %d",
 	   e_ident[EI_VERSION]);
 	switch (e_ident[EI_VERSION])
@@ -117,7 +111,7 @@ void ELF_info(unsigned char *e_ident)
 }
 
 /**
- * printType - Prints the type of an ELF header
+ * print_type - Prints the type of an ELF header
  * @e_type: The ELF type
  * @e_ident: A pointer to an array containing the ELF class
  *
@@ -188,7 +182,6 @@ int main(int argc, char *argv[])
 	h = malloc(sizeof(Elf64_Ehdr));
 	if (h == NULL)
 	{
-		closeELF(elf);
 		dprintf(STDERR_FILENO, "Error: Can't read file %s\n", argv[1]);
 		exit(98);
 	}
@@ -196,19 +189,23 @@ int main(int argc, char *argv[])
 	if (rd == -1)
 	{
 		free(h);
-		closeELF(elf);
 		dprintf(STDERR_FILENO, "Error: `%s`: No such file\n", argv[1]);
 		exit(98);
 	}
 
 	checkELF(h->e_ident);
 	printf("ELF Header:\n");
-	ELF_info(h->e_ident);
+	ELF_info1(h->e_ident);
+	ELF_info2(h->e_ident);
 	print_type(h->e_type, h->e_ident);
 	print_entry(h->e_entry, h->e_ident);
 
 	free(h);
-	closeELF(elf);
+	if (close(elf) == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", elf);
+		exit(98);
+	}
 
 	return (0);
 }
